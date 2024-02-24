@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Osteoporosis Diagnostic Tool</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background: url('/static/images/stethoscope-clipboard.jpg') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+        .container_prev {
+            text-align: center;
+            position: relative;
+            top: 30%;
+            transform: translateY(-50%);
+            color: #333;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            width: 50%;
+            margin: auto;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .container {
+            text-align: center;
+            max-width: 800px; /* Set a max-width for the container */
+            margin: 20px auto; /* Center the container */
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9); /* Slightly transparent white background */
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow-y: auto; /* Allows scrolling on the y-axis if content overflows */
+        }
+        h1 {
+            font-size: 2.5em;
+            color: #2c3e50;
+            margin-bottom: 0.3em;
+        }
+        p {
+            font-size: 1.2em;
+            color: #34495e;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .button:hover {
+            background-color: #2980b9;
+        }
+        .input-field {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .form-container_prev {
+            margin-top: 20px;
+        }
+        .form-container {
+            margin-top: 20px;
+        }
+        #prediction-result {
+            background-color: black;
+            color: #00ff00; /* Matrix green */
+            font-family: 'Courier New', Courier, monospace; /* Gives it more of a Matrix look */
+            padding: 10px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        #model-accuracy-result {
+            padding: 10px;
+            margin-top: 20px;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; /* Matches body */
+            color: #333; /* Assuming body text color is #333, adjust if different */
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to the Osteoporosis Diagnostic Tool</h1>
+        <p>This tool leverages advanced machine learning to analyze risk factors and predict the likelihood of osteoporosis, aiding in early diagnosis and effective management.</p>
+        
+        <!-- Form for inputting the 10 features -->
+        <div class="form-container">
+            <h2>Manual Feature Input</h2>
+            <p>Enter the feature values to predict the likelihood of osteoporosis:</p>
+            <input type="number" class="input-field" id="ldl-c" placeholder="LDL-C: Low-density lipoprotein cholesterol levels">
+            <input type="number" class="input-field" id="as" placeholder="AS: Presence (1) or absence (0) of a condition">
+            <input type="number" class="input-field" id="calcitonin" placeholder="Calcitonin: Presence (1) or absence (0) of calcitonin-related conditions">
+            <input type="number" class="input-field" id="copd" placeholder="COPD: Presence (1) or absence (0) of COPD">
+            <input type="number" class="input-field" id="cad" placeholder="CAD: Presence (1) or absence (0) of CAD">
+            <input type="number" class="input-field" id="tlt" placeholder="TLT: Numerical feature (measurement or score)">
+            <input type="number" class="input-field" id="fn" placeholder="FN: Numerical feature (measurement or score)">
+            <input type="number" class="input-field" id="calcitriol" placeholder="Calcitriol: Presence (1) or absence (0) of calcitriol-related treatments">
+            <input type="number" class="input-field" id="tl" placeholder="TL: Numerical feature (measurement or score)">
+            <input type="number" class="input-field" id="fnt" placeholder="FNT: Numerical feature (measurement or score)">
+        </div>
+        <button class="button" onclick="getPrediction()">Get Result</button>
+        <button class="button" onclick="autoPopulateValues()">Auto Populate Values</button>
+        <div id="prediction-result"></div>
+        <button class="button" onclick="testModel()">Test the Model</button>
+        <div id="model-accuracy-result"></div>
+
+
+    </div>
+
+    <script>
+        function getPrediction_old() {
+            var features_old = {
+                'LDL-C': document.getElementById('ldl-c').value,
+                'AS': document.getElementById('as').value,
+                'Calcitonin': document.getElementById('calcitonin').value,
+                'COPD': document.getElementById('copd').value,
+                'CAD': document.getElementById('cad').value,
+                'TLT': document.getElementById('tlt').value,
+                'FN': document.getElementById('fn').value,
+                'Calcitriol': document.getElementById('calcitriol').value,
+                'TL': document.getElementById('tl').value,
+                'FNT': document.getElementById('fnt').value
+            };
+            var feature_val = [
+                    document.getElementById('ldl-c').value,
+                    document.getElementById('as').value,
+                    document.getElementById('calcitonin').value,
+                    document.getElementById('copd').value,
+                    document.getElementById('cad').value,
+                    document.getElementById('tlt').value,
+                    document.getElementById('fn').value,
+                    document.getElementById('calcitriol').value,
+                    document.getElementById('tl').value,
+                    document.getElementById('fnt').value
+            ];
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ "features": feature_val })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Osteoporosis Prediction: ' + (data[0] ? 'Detected' : 'Not Detected'));
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while predicting osteoporosis.');
+            });
+        }
+        function getPrediction() {
+            var features = [
+                parseFloat(document.getElementById('ldl-c').value),
+                parseFloat(document.getElementById('as').value),
+                parseFloat(document.getElementById('calcitonin').value),
+                parseFloat(document.getElementById('copd').value),
+                parseFloat(document.getElementById('cad').value),
+                parseFloat(document.getElementById('tlt').value),
+                parseFloat(document.getElementById('fn').value),
+                parseFloat(document.getElementById('calcitriol').value),
+                parseFloat(document.getElementById('tl').value),
+                parseFloat(document.getElementById('fnt').value)
+            ];
+            
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ "features": features })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('prediction-result').textContent = 
+                    'Osteoporosis Prediction: ' + (data[0] ? 'Detected' : 'Not Detected');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while predicting osteoporosis.');
+            });
+        }
+
+        function autoPopulateValues_old() {
+            document.getElementById('ldl-c').value = 2.06;
+            document.getElementById('as').value = 1.0;
+            document.getElementById('calcitonin').value = 0.0;
+            document.getElementById('copd').value = 1.0;
+            document.getElementById('cad').value = 1.0;
+            document.getElementById('tlt').value = -2.9;
+            document.getElementById('fn').value = 0.6895;
+            document.getElementById('calcitriol').value = 1.0;
+            document.getElementById('tl').value = 0.713;
+            document.getElementById('fnt').value = -2.95;
+        }
+        var populateIndex = 0;
+        var valuesSets = [
+            [1.89, 0, 0, 0, 0, 1.00, 1.1080, 0, 1.1185, 1.05], // Osteoporosis Not Detected
+            [2.55, 1, 0, 0, 0, -0.35, 0.8480, 0, 1.0480, -1.70], // Osteoporosis Not Detected
+            [3.22, 0, 0, 0, 0, -2.45, 0.7080, 1, 0.7085, -2.25], // Osteoporosis Not Detected
+            [3.86, 1, 0, 0, 0, -2.95, 0.6445, 0, 0.7020, -3.25], // Osteoporosis Detected
+            [3.17, 1, 0, 1, 0, -1.95, 0.6845, 1, 0.8355, -3.00] // Osteoporosis Detected
+        ];
+        function autoPopulateValues() {
+            var currentValues = valuesSets[populateIndex];
+            document.getElementById('ldl-c').value = currentValues[0];
+            document.getElementById('as').value = currentValues[1];
+            document.getElementById('calcitonin').value = currentValues[2];
+            document.getElementById('copd').value = currentValues[3];
+            document.getElementById('cad').value = currentValues[4];
+            document.getElementById('tlt').value = currentValues[5];
+            document.getElementById('fn').value = currentValues[6];
+            document.getElementById('calcitriol').value = currentValues[7];
+            document.getElementById('tl').value = currentValues[8];
+            document.getElementById('fnt').value = currentValues[9];
+            
+            populateIndex = (populateIndex + 1) % valuesSets.length; // Cycle through the sets
+        }
+
+        function testModel() {
+            fetch('/test_model', {
+                method: 'GET'
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('model-accuracy-result').textContent = 
+                    'Model Accuracy: ' + (data.prediction_accuracy * 100).toFixed(2) + '%';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('model-accuracy-result').textContent = 
+                    'An error occurred while testing the model.';
+            });
+        }
+            
+    </script>
+</body>
+</html>
