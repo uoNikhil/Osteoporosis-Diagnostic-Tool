@@ -46,9 +46,11 @@ def test_model():
 @app.route('/upload', methods=['GET'])
 def predict_first():
     first_row_features = test_features.iloc[0].values.reshape(1, -1)
-    prediction = model.predict(first_row_features) 
+    prediction = model.predict(first_row_features)
     is_osteoporosis = prediction[0] == 1
-    return jsonify({"Osteoporosis": is_osteoporosis})
+    is_osteoporosis_python_bool = bool(is_osteoporosis)
+    return jsonify({"Osteoporosis": is_osteoporosis_python_bool})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
