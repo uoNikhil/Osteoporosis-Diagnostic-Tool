@@ -43,5 +43,12 @@ def test_model():
     
     return jsonify({'prediction_accuracy': accuracy})
 
+@app.route('/upload', methods=['GET'])
+def predict_first():
+    first_row_features = test_features.iloc[0].values.reshape(1, -1)
+    prediction = model.predict(first_row_features) 
+    is_osteoporosis = prediction[0] == 1
+    return jsonify({"Osteoporosis": is_osteoporosis})
+
 if __name__ == '__main__':
     app.run(debug=True)
