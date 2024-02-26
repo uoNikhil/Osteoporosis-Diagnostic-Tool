@@ -2,8 +2,10 @@ from flask import Flask, request, jsonify, render_template
 import joblib
 import pandas as pd
 from sklearn.metrics import accuracy_score
+from flask_cors import CORS  # Import CORS
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all domains on all routes. For development use.
 
 # Load your trained model
 model = joblib.load("Data/best_model_reduced_10_fetures.pkl")
